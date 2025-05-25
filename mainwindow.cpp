@@ -9,7 +9,7 @@ MainWindow::MainWindow(QWidget *parent)
     QVBoxLayout *layout = new QVBoxLayout();
 
     mediaButton = new QPushButton("🎵 Video / Music Player");
-    textButton = new QPushButton("📄 Text Reader");
+    textButton = new QPushButton("📄 Text Viewer");
     imageButton = new QPushButton("🖼️ Image Viewer");
     fileExplorerButton = new QPushButton("📁 File Explorer");
 

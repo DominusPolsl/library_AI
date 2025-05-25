@@ -8,7 +8,7 @@ int main(int argc, char *argv[]) {
 
     MainWindow window;
     window.setWindowTitle("Multimedia Library Menu");
-    window.resize(400, 300);
+    window.resize(600, 400);
     window.show();
 
     return app.exec();
