@@ -1,0 +1,10 @@
+.vscode/
+build/
+build*/          
+*.cmake
+CMakeCache.txt
+*.user
+*.user.*
+*.pro.user
+*.autosave
+CMakeFiles/
