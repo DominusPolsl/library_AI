@@ -1,5 +1,0 @@
-C:/Users/kosti/Desktop/university/Politechnika Slaska/library_AI/build/CMakeFiles/library_AI.dir
-C:/Users/kosti/Desktop/university/Politechnika Slaska/library_AI/build/CMakeFiles/edit_cache.dir
-C:/Users/kosti/Desktop/university/Politechnika Slaska/library_AI/build/CMakeFiles/rebuild_cache.dir
-C:/Users/kosti/Desktop/university/Politechnika Slaska/library_AI/build/CMakeFiles/library_AI_autogen_timestamp_deps.dir
-C:/Users/kosti/Desktop/university/Politechnika Slaska/library_AI/build/CMakeFiles/library_AI_autogen.dir
