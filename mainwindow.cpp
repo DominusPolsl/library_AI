@@ -1,4 +1,6 @@
 #include "mainwindow.h"
+#include "textviewer.h"
+
 #include <QFileDialog>
 #include <QDebug>
 
@@ -36,7 +38,11 @@ void MainWindow::openMediaPlayer() {
 
 void MainWindow::openTextReader() {
     qDebug() << "Opening Text Reader...";
-    // Add code to launch text reader window here
+    TextViewer *viewer = new TextViewer(this);
+    viewer->setAttribute(Qt::WA_DeleteOnClose);
+    viewer->setWindowTitle("Text Viewer");
+    viewer->showMaximized();
+    viewer->show();
 }
 
 void MainWindow::openImageViewer() {
