@@ -3,6 +3,7 @@
 #include <QPushButton>
 #include <QVBoxLayout>
 #include <QWidget>
+#include "textviewer.h"
 
 class MainWindow : public QMainWindow {
     Q_OBJECT
@@ -10,6 +11,9 @@ class MainWindow : public QMainWindow {
 public:
     MainWindow(QWidget *parent = nullptr);
     ~MainWindow();
+    
+    void showMainMenu();
+    
 
 private slots:
     void openMediaPlayer();
@@ -22,4 +26,7 @@ private:
     QPushButton *textButton;
     QPushButton *imageButton;
     QPushButton *fileExplorerButton;
+    QStringList rememberedFiles;
+
+    TextViewer *textViewer = nullptr;
 };

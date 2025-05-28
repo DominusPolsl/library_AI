@@ -38,11 +38,18 @@ void MainWindow::openMediaPlayer() {
 
 void MainWindow::openTextReader() {
     qDebug() << "Opening Text Reader...";
-    TextViewer *viewer = new TextViewer(this);
-    viewer->setAttribute(Qt::WA_DeleteOnClose);
-    viewer->setWindowTitle("Text Viewer");
-    viewer->showMaximized();
-    viewer->show();
+
+    QWidget *oldCentral = centralWidget();
+    if (oldCentral)
+        oldCentral->deleteLater(); // робота на "одному" вікні
+    textViewer = new TextViewer(rememberedFiles);
+    connect(textViewer, &TextViewer::returnToMainMenuClicked, this, &MainWindow::showMainMenu);
+    connect(textViewer, &TextViewer::fileAdded, this, [this](const QString &path) {
+            if (!rememberedFiles.contains(path))
+                rememberedFiles.append(path);});
+    connect(textViewer, &TextViewer::fileRemoved, this, [this](const QString &path) {
+    rememberedFiles.removeAll(path);});
+    setCentralWidget(textViewer);
 }
 
 void MainWindow::openImageViewer() {
@@ -56,4 +63,33 @@ void MainWindow::openFileExplorer() {
         qDebug() << "Selected folder:" << dir;
         // Optional: display contents or pass to file manager window
     }
+}
+
+void MainWindow::showMainMenu() // знадобиться для всіх вікон
+{
+QWidget *oldCentral = centralWidget();
+    if (oldCentral)
+        oldCentral->deleteLater();
+
+    // Tworzymy nowy układ przycisków
+    QWidget *central = new QWidget(this);
+    QVBoxLayout *layout = new QVBoxLayout();
+
+    mediaButton = new QPushButton("🎵 Video / Music Player");
+    textButton = new QPushButton("📄 Text Viewer");
+    imageButton = new QPushButton("🖼️ Image Viewer");
+    fileExplorerButton = new QPushButton("📁 File Explorer");
+
+    layout->addWidget(mediaButton);
+    layout->addWidget(textButton);
+    layout->addWidget(imageButton);
+    layout->addWidget(fileExplorerButton);
+
+    central->setLayout(layout);
+    setCentralWidget(central);
+
+    connect(mediaButton, &QPushButton::clicked, this, &MainWindow::openMediaPlayer);
+    connect(textButton, &QPushButton::clicked, this, &MainWindow::openTextReader);
+    connect(imageButton, &QPushButton::clicked, this, &MainWindow::openImageViewer);
+    connect(fileExplorerButton, &QPushButton::clicked, this, &MainWindow::openFileExplorer);
 }
