@@ -2,7 +2,10 @@
 #include <QMainWindow>
 #include <QPushButton>
 #include <QVBoxLayout>
-#include <QWidget>
+#include <QStackedWidget>
+
+#include "textviewer.h"
+#include "mediaplayer.h"
 
 class MainWindow : public QMainWindow {
     Q_OBJECT
@@ -16,8 +19,15 @@ private slots:
     void openTextReader();
     void openImageViewer();
     void openFileExplorer();
+    void goBackToMenu(); // Повернення назад
 
 private:
+    QStackedWidget *stack;
+
+    QWidget *menuPage;
+    MediaPlayer *mediaPlayerPage;
+    TextViewer *textViewerPage;
+
     QPushButton *mediaButton;
     QPushButton *textButton;
     QPushButton *imageButton;
