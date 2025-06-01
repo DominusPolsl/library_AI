@@ -1,4 +1,3 @@
-// mediaplayer.cpp
 #include "mediaplayer.h"
 #include <QDebug>
 #include <QFileInfo>
@@ -16,10 +15,10 @@ MediaPlayer::MediaPlayer(QWidget *parent)
     playPauseButton = new QPushButton("Play", this);
     statusLabel = new QLabel("Status: Ready", this);
 
-    // Примусовий аудіоформат (якщо підтримується)
     QAudioDevice device = QMediaDevices::defaultAudioOutput();
+
     audioOutput = new QAudioOutput(device, this);
-    
+
     mediaPlayer = new QMediaPlayer(this);
     mediaPlayer->setVideoOutput(videoWidget);
     mediaPlayer->setAudioOutput(audioOutput);
@@ -55,6 +54,7 @@ void MediaPlayer::openFile() {
     if (!fileName.isEmpty()) {
         mediaPlayer->setSource(QUrl::fromLocalFile(fileName));
         mediaPlayer->play();
+        qDebug() << "Audio Output device:" << audioOutput->device().description();
         playPauseButton->setText("Pause");
         statusLabel->setText("Playing: " + QFileInfo(fileName).fileName());
     }
