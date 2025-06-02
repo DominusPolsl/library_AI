@@ -44,11 +44,8 @@ void MainWindow::openTextReader() {
         oldCentral->deleteLater(); // робота на "одному" вікні
     textViewer = new TextViewer(rememberedFiles);
     connect(textViewer, &TextViewer::returnToMainMenuClicked, this, &MainWindow::showMainMenu);
-    connect(textViewer, &TextViewer::fileAdded, this, [this](const QString &path) {
-            if (!rememberedFiles.contains(path))
-                rememberedFiles.append(path);});
-    connect(textViewer, &TextViewer::fileRemoved, this, [this](const QString &path) {
-    rememberedFiles.removeAll(path);});
+    connect(textViewer, &TextViewer::fileAdded, this, [this](const QString &path) {if (!rememberedFiles.contains(path)) rememberedFiles.append(path);});
+    connect(textViewer, &TextViewer::fileRemoved, this, [this](const QString &path) {rememberedFiles.removeAll(path);});
     setCentralWidget(textViewer);
 }
 
@@ -93,3 +90,4 @@ QWidget *oldCentral = centralWidget();
     connect(imageButton, &QPushButton::clicked, this, &MainWindow::openImageViewer);
     connect(fileExplorerButton, &QPushButton::clicked, this, &MainWindow::openFileExplorer);
 }
+

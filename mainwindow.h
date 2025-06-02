@@ -11,7 +11,7 @@ class MainWindow : public QMainWindow {
 public:
     MainWindow(QWidget *parent = nullptr);
     ~MainWindow();
-    
+
     void showMainMenu();
     
 
@@ -21,12 +21,13 @@ private slots:
     void openImageViewer();
     void openFileExplorer();
 
+
 private:
     QPushButton *mediaButton;
     QPushButton *textButton;
     QPushButton *imageButton;
     QPushButton *fileExplorerButton;
     QStringList rememberedFiles;
-
+    QStringList fontList;
     TextViewer *textViewer = nullptr;
 };
