@@ -9,6 +9,8 @@
 #include <QFileDialog>
 #include <QLabel>
 #include <QMediaDevices>
+#include <QSlider>
+#include <QLCDNumber>
 
 class MediaPlayer : public QWidget {
     Q_OBJECT
@@ -20,12 +22,19 @@ public:
 private slots:
     void openFile();
     void togglePlayPause();
+    void updatePosition(qint64 position);
+    void updateDuration(qint64 duration);
 
 private:
     QMediaPlayer *mediaPlayer;
     QAudioOutput *audioOutput;
     QVideoWidget *videoWidget;
+
     QPushButton *openButton;
     QPushButton *playPauseButton;
     QLabel *statusLabel;
+
+    QSlider *progressSlider;
+    QSlider *volumeSlider;
+    QLCDNumber *timeDisplay;
 };

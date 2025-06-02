@@ -1,23 +1,29 @@
 #pragma once
-#include <QMainWindow>
+#include <QWidget>
+#include <QPdfDocument>
+#include <QPdfDocumentRenderOptions>
+#include <QLabel>
+#include <QPushButton>
+#include <QVBoxLayout>
+#include <QHBoxLayout>
 
-class QTextEdit;
-class QListWidget;
-
-class TextViewer : public QMainWindow
-{
+class TextViewer : public QWidget {
     Q_OBJECT
 
 public:
-    TextViewer(QWidget *parent = nullptr);
+    explicit TextViewer(QWidget *parent = nullptr);
 
 private slots:
-    void openFile();
-    void loadSelectedFile();
-    void showContextMenu(const QPoint &pos);
+    void openPdf();
+    void nextPage();
+    void prevPage();
 
 private:
-    QTextEdit *textEdit;
-    QListWidget *sidebar;
-    void createMenu();
+    QPdfDocument *pdfDoc;
+    QLabel *pageLabel;
+    QPushButton *openButton;
+    QPushButton *nextButton;
+    QPushButton *prevButton;
+    int currentPage;
+    void showPage();
 };

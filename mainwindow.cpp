@@ -34,9 +34,9 @@ MainWindow::MainWindow(QWidget *parent)
     connect(backBtn1, &QPushButton::clicked, this, &MainWindow::goBackToMenu);
 
     // Кнопка "Назад" у текстовому вікні
-    QPushButton *backBtn2 = new QPushButton("🔙 Back to Menu", textViewerPage);
-    backBtn2->move(10, 10);
-    connect(backBtn2, &QPushButton::clicked, this, &MainWindow::goBackToMenu);
+    //QPushButton *backBtn2 = new QPushButton("🔙 Back to Menu", textViewerPage);
+    //backBtn2->move(10, 10);
+    //connect(backBtn2, &QPushButton::clicked, this, &MainWindow::goBackToMenu);
 
     // === Додати сторінки до стеку ===
     stack->addWidget(menuPage);         // index 0

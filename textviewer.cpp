@@ -1,123 +1,90 @@
 #include "textviewer.h"
-#include <QTextEdit>
-#include <QMenuBar>
-#include <QMenu>
-#include <QAction>
 #include <QFileDialog>
-#include <QFile>
-#include <QTextStream>
 #include <QMessageBox>
-#include <QSplitter>
-#include <QListWidget>
+#include <QPixmap>
+#include <QDir>
 
 TextViewer::TextViewer(QWidget *parent)
-    : QMainWindow(parent)
+    : QWidget(parent), currentPage(0)
 {
-    QSplitter *splitter = new QSplitter(this);
-    splitter->setHandleWidth(0);
+    pdfDoc = new QPdfDocument(this);
+    pageLabel = new QLabel(this);
+    pageLabel->setAlignment(Qt::AlignCenter);
+    pageLabel->setMinimumSize(600, 700);
 
-    // Sidebar
-    sidebar = new QListWidget(splitter);
-    sidebar->setFixedWidth(400);
+    openButton = new QPushButton("📁 File", this);
+    prevButton = new QPushButton("←", this);
+    nextButton = new QPushButton("→", this);
 
-    sidebar->setContextMenuPolicy(Qt::CustomContextMenu);
-    connect(sidebar, &QListWidget::customContextMenuRequested, this, &TextViewer::showContextMenu);
+    QVBoxLayout *layout = new QVBoxLayout(this);
 
-    connect(sidebar, &QListWidget::itemClicked, this, &TextViewer::loadSelectedFile);
+    // верхній ряд: кнопка "Назад"
+    QPushButton *backButton = new QPushButton("🔙 Back to Menu", this);
+    backButton->setFixedSize(120, 30);
+    layout->addWidget(backButton, 0, Qt::AlignLeft);
+    connect(backButton, &QPushButton::clicked, [this]() {
+        QWidget *topLevel = this->window();
+        if (topLevel) topLevel->close(); // або emit сигнал назад
+    });
 
-    // Czytnik
-    textEdit = new QTextEdit(splitter);
-    textEdit->setReadOnly(true);
-    textEdit->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+    // другий ряд: File + стрілки
+    QHBoxLayout *controls = new QHBoxLayout();
+    controls->addWidget(openButton);
+    controls->addStretch();
+    controls->addWidget(prevButton);
+    controls->addWidget(nextButton);
+    layout->addLayout(controls);
 
-    setCentralWidget(splitter);
-    createMenu();
+    // третій ряд: PDF рендер
+    layout->addWidget(pageLabel);
+
+    // встановити layout
+    setLayout(layout);
+
+    connect(openButton, &QPushButton::clicked, this, &TextViewer::openPdf);
+    connect(prevButton, &QPushButton::clicked, this, &TextViewer::prevPage);
+    connect(nextButton, &QPushButton::clicked, this, &TextViewer::nextPage);
 }
 
-void TextViewer::createMenu()
-{
-    QMenu *fileMenu = menuBar()->addMenu(tr("&Dodaj Plik"));
+void TextViewer::openPdf() {
+    QString fileName = QFileDialog::getOpenFileName(this, "Open PDF", QDir::homePath(), "PDF files (*.pdf)");
+    if (fileName.isEmpty()) return;
 
-    QAction *openAction = new QAction(tr("&Otwórz..."), this);
-    connect(openAction, &QAction::triggered, this, &TextViewer::openFile);
-
-    fileMenu->addAction(openAction);
-}
-
-void TextViewer::openFile()
-{
-    QString fileName = QFileDialog::getOpenFileName(this, tr("Otwórz książkę"), "", 
-    tr("Pliki tekstowe (*.txt);;Wszystkie pliki (*)"));
-
-    if (fileName.isEmpty())
-        return;
-
-    QFile file(fileName);
-    if (!file.open(QIODevice::ReadOnly | QIODevice::Text)) {
-        QMessageBox::warning(this, tr("Błąd"),
-            tr("Nie można otworzyć pliku:\n%1").arg(file.errorString()));
+    QPdfDocument::Error err = pdfDoc->load(fileName);
+    if (err != QPdfDocument::Error::None) {
+        QMessageBox::critical(this, "Error", "Failed to load PDF file.");
         return;
     }
 
-    QTextStream in(&file);
-    textEdit->setPlainText(in.readAll());
-
-    QString displayName = QFileInfo(fileName).fileName();
-
-    QList<QListWidgetItem*> items = sidebar->findItems(displayName, Qt::MatchExactly);
-    if (items.isEmpty()) {
-        QListWidgetItem *item = new QListWidgetItem(displayName);
-        item->setData(Qt::UserRole, fileName);
-        sidebar->addItem(item);
-    }
+    currentPage = 0;
+    showPage();
 }
 
+void TextViewer::showPage() {
+    if (!pdfDoc || pdfDoc->pageCount() <= 0) return;
 
-void TextViewer::loadSelectedFile()
-{
-    QListWidgetItem *item = sidebar->currentItem();
-    if (!item)
-        return;
-    QString filePath = item->data(Qt::UserRole).toString(); // ← NIE item->text()!
-    QFile file(filePath);
+    QSize imageSize(800, 1000);
+    QPdfDocumentRenderOptions options;
+    QImage image = pdfDoc->render(currentPage, imageSize, options);
 
-    /* QString fileName = sidebar->currentItem()->text();
-    QFile file(fileName); */
-    if (!file.open(QIODevice::ReadOnly | QIODevice::Text)) {
-        QMessageBox::warning(this, tr("Błąd"),
-            tr("Nie można otworzyć pliku:\n%1").arg(file.errorString()));
+    if (image.isNull()) {
+        QMessageBox::warning(this, "Error", "Unable to render PDF page.");
         return;
     }
 
-    QTextStream in(&file);
-    textEdit->setPlainText(in.readAll());
+    pageLabel->setPixmap(QPixmap::fromImage(image));
 }
 
-void TextViewer::showContextMenu(const QPoint &pos)
-{
-    QListWidgetItem *item = sidebar->itemAt(pos);
-    if (!item)
-        return;
+void TextViewer::nextPage() {
+    if (currentPage + 1 < pdfDoc->pageCount()) {
+        ++currentPage;
+        showPage();
+    }
+}
 
-    QMenu contextMenu;
-    QAction *removeAction = contextMenu.addAction("Usuń z listy");
-
-    QAction *selectedAction = contextMenu.exec(sidebar->viewport()->mapToGlobal(pos));
-    if (selectedAction == removeAction) {
-        // 🔍 Pobierz ścieżkę z klikniętego elementu
-        QString removedFilePath = item->data(Qt::UserRole).toString();
-
-        // 🔍 Sprawdź, czy to aktualnie otwarty plik
-        QString currentText = textEdit->toPlainText();
-        QFile file(removedFilePath);
-        if (file.open(QIODevice::ReadOnly | QIODevice::Text)) {
-            QTextStream in(&file);
-            QString content = in.readAll();
-            if (content == currentText) {
-                textEdit->clear(); // ✅ Wyczyszczenie widoku
-            }
-        }
-
-        delete sidebar->takeItem(sidebar->row(item)); // 🗑️ Usunięcie z listy
+void TextViewer::prevPage() {
+    if (currentPage > 0) {
+        --currentPage;
+        showPage();
     }
 }
