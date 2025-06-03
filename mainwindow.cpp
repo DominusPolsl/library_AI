@@ -29,10 +29,11 @@ MainWindow::MainWindow(QWidget *parent)
     textViewerPage = new TextViewer(this);
 
     // Кнопка "Назад" у медіаплеєрі
-    QPushButton *backBtn1 = new QPushButton("🔙 Back to Menu", mediaPlayerPage);
-    backBtn1->move(10, 10);
-    connect(backBtn1, &QPushButton::clicked, this, &MainWindow::goBackToMenu);
+    /*QPushButton *backBtn1 = new QPushButton("🔙 Back to Menu", mediaPlayerPage);
+    backBtn1->move(10, 900);
+    connect(backBtn1, &QPushButton::clicked, this, &MainWindow::goBackToMenu);*/
     connect(textViewerPage, &TextViewer::backToMenuRequested, this, &MainWindow::goBackToMenu);
+    connect(mediaPlayerPage, &MediaPlayer::backToMenuRequested, this, &MainWindow::goBackToMenu);
 
 
     // Кнопка "Назад" у текстовому вікні

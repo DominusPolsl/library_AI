@@ -11,8 +11,7 @@ int main(int argc, char *argv[]) {
 
     MainWindow window;
     window.setWindowTitle("Multimedia Library Menu");
-    window.resize(600, 400);
-    window.show();
+    window.showMaximized();
 
     return app.exec();
 }

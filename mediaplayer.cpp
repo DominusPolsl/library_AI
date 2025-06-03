@@ -56,9 +56,6 @@ MediaPlayer::MediaPlayer(QWidget *parent)
     timeDisplay->setAlignment(Qt::AlignRight);
     timeDisplay->setStyleSheet("font-family: monospace; font-size: 14px;");
 
-    // === Статус ===
-    statusLabel = new QLabel("Status: Ready", this);
-
     // === Аудіо ===
     QAudioDevice device = QMediaDevices::defaultAudioOutput();
     audioOutput = new QAudioOutput(device, this);
@@ -82,6 +79,12 @@ MediaPlayer::MediaPlayer(QWidget *parent)
     addToPlaylistButton->setFixedSize(24, 24);
     addToPlaylistButton->setFlat(true);
 
+    QPushButton *backButton = new QPushButton("Back to Menu", this);
+    backButton->setFixedSize(100, 30);
+    connect(backButton, &QPushButton::clicked, this, [=]() {
+        emit backToMenuRequested();
+    });
+
     QHBoxLayout *playlistHeader = new QHBoxLayout();
     playlistHeader->addWidget(playlistTitle);
     playlistHeader->addStretch();
@@ -100,6 +103,7 @@ MediaPlayer::MediaPlayer(QWidget *parent)
     QHBoxLayout *progressLayout = new QHBoxLayout();       // лише слайдер
     QHBoxLayout *timeLayout = new QHBoxLayout();          // прогрес + таймер
     QHBoxLayout *controlsLayout = new QHBoxLayout();        // кнопки
+    QHBoxLayout *bottomLayout = new QHBoxLayout();
 
     mediaStack = new QStackedLayout();
     mediaStack->addWidget(videoWidget);
@@ -126,14 +130,17 @@ MediaPlayer::MediaPlayer(QWidget *parent)
     controlsLayout->addWidget(volumeSlider);          // 🎚
     controlsLayout->addWidget(playlistButton);  
 
+    bottomLayout->addWidget(backButton, 0, Qt::AlignLeft);
+    bottomLayout->addStretch();
+
     mainLayout->addLayout(videoLayout, 9);
     mainLayout->addLayout(progressLayout);   // слайдер (широкий)
     mainLayout->addLayout(timeLayout);       // час + кнопка
     mainLayout->addLayout(controlsLayout);   // кнопки керування
-    mainLayout->addWidget(statusLabel);
+    mainLayout->addLayout(bottomLayout);
 
     setLayout(mainLayout);
-    resize(800, 480);
+    showMaximized();
     setWindowTitle("Qt Media Player");
 
     // === Події ===
@@ -187,7 +194,6 @@ MediaPlayer::MediaPlayer(QWidget *parent)
         });
 
         playPauseButton->setIcon(QIcon("../icons/stop_button_proj.png"));
-        statusLabel->setText("Playing: " + QFileInfo(filePath).fileName());
         }
     };
 
@@ -216,7 +222,6 @@ void MediaPlayer::openFile() {
         mediaPlayer->play();
         updateMediaDisplay();
         playPauseButton->setIcon(QIcon("../icons/stop_button_proj.png"));
-        statusLabel->setText("Playing: " + QFileInfo(fileName).fileName());
     }
 }
 
@@ -232,11 +237,9 @@ void MediaPlayer::togglePlayPause() {
     if (mediaPlayer->playbackState() == QMediaPlayer::PlayingState) {
         mediaPlayer->pause();
         playPauseButton->setIcon(QIcon("../icons/play_button_proj.png"));
-        statusLabel->setText("Paused");
     } else {
         mediaPlayer->play();
         playPauseButton->setIcon(QIcon("../icons/stop_button_proj.png"));
-        statusLabel->setText("Playing");
     }
 }
 
@@ -260,5 +263,6 @@ void MediaPlayer::updatePosition(qint64 position) {
     QString timeStr = currentTime.toString("hh:mm:ss") + " / " + totalTime.toString("hh:mm:ss");
     timeDisplay->setText(timeStr); 
 }
+
     
 

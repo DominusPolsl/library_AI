@@ -10,7 +10,7 @@ TextViewer::TextViewer(QWidget *parent)
     pdfDoc = new QPdfDocument(this);
     pageLabel = new QLabel(this);
     pageLabel->setAlignment(Qt::AlignCenter);
-    pageLabel->setMinimumSize(600, 700);
+    pageLabel->setMinimumSize(1500, 900);
 
     openButton = new QPushButton("📁 File", this);
     prevButton = new QPushButton("←", this);
@@ -19,7 +19,7 @@ TextViewer::TextViewer(QWidget *parent)
     QVBoxLayout *layout = new QVBoxLayout(this);
 
     // верхній ряд: кнопка "Назад"
-    QPushButton *backButton = new QPushButton("🔙 Back to Menu", this);
+    QPushButton *backButton = new QPushButton("Back to Menu", this);
     backButton->setFixedSize(120, 30);
     layout->addWidget(backButton, 0, Qt::AlignLeft);
     connect(backButton, &QPushButton::clicked, this, [this]() {

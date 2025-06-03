@@ -42,7 +42,6 @@ private:
 
     QPushButton *openButton;
     QPushButton *playPauseButton;
-    QLabel *statusLabel;
     QPushButton *rewindButton;
     QPushButton *forwardButton;
     QPushButton *playlistButton;
@@ -54,4 +53,8 @@ private:
     QSlider *volumeSlider;
     QLabel *timeDisplay;
     qint64 totalDuration = 0;
+
+signals:
+    void backToMenuRequested();
+
 };
