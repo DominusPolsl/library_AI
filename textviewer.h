@@ -30,4 +30,4 @@ private:
 signals:
     void backToMenuRequested();    
 
-};
+}; 

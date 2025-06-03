@@ -32,7 +32,7 @@ MainWindow::MainWindow(QWidget *parent)
     /*QPushButton *backBtn1 = new QPushButton("🔙 Back to Menu", mediaPlayerPage);
     backBtn1->move(10, 900);
     connect(backBtn1, &QPushButton::clicked, this, &MainWindow::goBackToMenu);*/
-    connect(textViewerPage, &TextViewer::backToMenuRequested, this, &MainWindow::goBackToMenu);
+    //connect(textViewerPage, &TextViewer::backToMenuRequested, this, &MainWindow::goBackToMenu);
     connect(mediaPlayerPage, &MediaPlayer::backToMenuRequested, this, &MainWindow::goBackToMenu);
 
 
