@@ -4,6 +4,7 @@
 #include <QVBoxLayout>
 #include <QWidget>
 #include "textviewer.h"
+#include "imageviewer.h"
 
 class MainWindow : public QMainWindow {
     Q_OBJECT
@@ -29,5 +30,7 @@ private:
     QPushButton *fileExplorerButton;
     QStringList rememberedFiles;
     QStringList fontList;
-    TextViewer *textViewer = nullptr;
+    TextViewer *textViewer;
+    ImageViewer *imageViewer;
+    QStringList rememberedImages;
 };
