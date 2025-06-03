@@ -26,4 +26,8 @@ private:
     QPushButton *prevButton;
     int currentPage;
     void showPage();
+
+signals:
+    void backToMenuRequested();    
+
 };

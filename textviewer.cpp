@@ -22,9 +22,8 @@ TextViewer::TextViewer(QWidget *parent)
     QPushButton *backButton = new QPushButton("🔙 Back to Menu", this);
     backButton->setFixedSize(120, 30);
     layout->addWidget(backButton, 0, Qt::AlignLeft);
-    connect(backButton, &QPushButton::clicked, [this]() {
-        QWidget *topLevel = this->window();
-        if (topLevel) topLevel->close(); // або emit сигнал назад
+    connect(backButton, &QPushButton::clicked, this, [this]() {
+        emit backToMenuRequested();  // замість close()
     });
 
     // другий ряд: File + стрілки
