@@ -6,6 +6,9 @@
 
 #include "textviewer.h"
 #include "mediaplayer.h"
+#include "imageviewer.h"
+
+class GestureServer; // 🔹 forward declaration (не забути)
 
 class MainWindow : public QMainWindow {
     Q_OBJECT
@@ -18,7 +21,7 @@ private slots:
     void openMediaPlayer();
     void openTextReader();
     void openImageViewer();
-    void openFileExplorer();
+    void openCamera();
     void goBackToMenu(); // Повернення назад
 
 private:
@@ -27,9 +30,12 @@ private:
     QWidget *menuPage;
     MediaPlayer *mediaPlayerPage;
     TextViewer *textViewerPage;
+    ImageViewer *imageViewerPage;
 
     QPushButton *mediaButton;
     QPushButton *textButton;
     QPushButton *imageButton;
-    QPushButton *fileExplorerButton;
+    QPushButton *cameraButton;
+
+    GestureServer *gestureServer; // 🔹 нове поле для сервера
 };

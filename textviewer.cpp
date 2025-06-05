@@ -10,7 +10,7 @@ TextViewer::TextViewer(QWidget *parent)
     pdfDoc = new QPdfDocument(this);
     pageLabel = new QLabel(this);
     pageLabel->setAlignment(Qt::AlignCenter);
-    pageLabel->setMinimumSize(1500, 900);
+    pageLabel->setMinimumSize(400, 600);
 
     openButton = new QPushButton("📁 File", this);
     prevButton = new QPushButton("←", this);

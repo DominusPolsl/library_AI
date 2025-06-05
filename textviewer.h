@@ -13,7 +13,7 @@ class TextViewer : public QWidget {
 public:
     explicit TextViewer(QWidget *parent = nullptr);
 
-private slots:
+public slots:
     void openPdf();
     void nextPage();
     void prevPage();

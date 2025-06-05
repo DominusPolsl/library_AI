@@ -1,50 +1,90 @@
 #include "mainwindow.h"
+#include "gesture_server.h"
 #include <QFileDialog>
 #include <QDebug>
+#include <QLabel>
+#include <QFont>
+#include <QGridLayout>
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
 {
+    setWindowTitle("Multimedia Library");
+    setWindowIcon(QIcon("../icons/app_icon.png"));
+
     stack = new QStackedWidget(this);
     setCentralWidget(stack);
 
     // === Головне меню ===
     menuPage = new QWidget(this);
-    QVBoxLayout *layout = new QVBoxLayout(menuPage);
+    QVBoxLayout *mainLayout = new QVBoxLayout(menuPage);
 
+    // Заголовок
+    QLabel *titleLabel = new QLabel("Multimedia Library");
+    QFont titleFont;
+    titleFont.setPointSize(24);
+    titleFont.setBold(true);
+    titleLabel->setFont(titleFont);
+    titleLabel->setAlignment(Qt::AlignCenter);
+    mainLayout->addWidget(titleLabel, 0, Qt::AlignTop);
+
+    // Кнопки
     mediaButton = new QPushButton("🎵 Video / Music Player");
     textButton = new QPushButton("📄 Text Viewer");
     imageButton = new QPushButton("🖼️ Image Viewer");
-    fileExplorerButton = new QPushButton("📁 File Explorer");
+    cameraButton = new QPushButton("📁 File Explorer");
 
-    layout->addWidget(mediaButton);
-    layout->addWidget(textButton);
-    layout->addWidget(imageButton);
-    layout->addWidget(fileExplorerButton);
+    QFont btnFont;
+    btnFont.setPointSize(14);
+    QList<QPushButton*> buttons = { mediaButton, textButton, imageButton, cameraButton };
+    for (auto *btn : buttons) {
+        btn->setFont(btnFont);
+        btn->setMinimumWidth(250);
+        btn->setFixedHeight(100);
+        btn->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Fixed);
+    }
 
-    menuPage->setLayout(layout);
+    // Сітка 2x2
+    QGridLayout *grid = new QGridLayout();
+    grid->setContentsMargins(50, 0, 50, 50);
+    grid->setSpacing(20);
+    grid->addWidget(mediaButton,        0, 0, Qt::AlignCenter);
+    grid->addWidget(textButton,         0, 1, Qt::AlignCenter);
+    grid->addWidget(imageButton,        1, 0, Qt::AlignCenter);
+    grid->addWidget(cameraButton,       1, 1, Qt::AlignCenter);
+    grid->setColumnStretch(0, 1);
+    grid->setColumnStretch(1, 1);
+
+    mainLayout->addLayout(grid);
+    menuPage->setLayout(mainLayout);
 
     // === Сторінки ===
     mediaPlayerPage = new MediaPlayer(this);
     textViewerPage = new TextViewer(this);
+    imageViewerPage = new ImageViewer({}, this);
 
-    // Кнопка "Назад" у медіаплеєрі
-    /*QPushButton *backBtn1 = new QPushButton("🔙 Back to Menu", mediaPlayerPage);
-    backBtn1->move(10, 900);
-    connect(backBtn1, &QPushButton::clicked, this, &MainWindow::goBackToMenu);*/
-    //connect(textViewerPage, &TextViewer::backToMenuRequested, this, &MainWindow::goBackToMenu);
+    gestureServer = new GestureServer(this);
+
+    connect(gestureServer, &GestureServer::gestureReceived, this, [=](const QString &cmd) {
+        QWidget *current = stack->currentWidget();
+
+        if (auto tv = qobject_cast<TextViewer *>(current)) {
+            if (cmd == "next") tv->nextPage();
+            else if (cmd == "prev") tv->prevPage();
+        }
+
+        // тут буде також MediaPlayer пізніше
+    });
+
+    connect(textViewerPage, &TextViewer::backToMenuRequested, this, &MainWindow::goBackToMenu);
     connect(mediaPlayerPage, &MediaPlayer::backToMenuRequested, this, &MainWindow::goBackToMenu);
-
-
-    // Кнопка "Назад" у текстовому вікні
-    //QPushButton *backBtn2 = new QPushButton("🔙 Back to Menu", textViewerPage);
-    //backBtn2->move(10, 10);
-    //connect(backBtn2, &QPushButton::clicked, this, &MainWindow::goBackToMenu);
+    connect(imageViewerPage, &ImageViewer::returnToMainMenuClicked, this, &MainWindow::goBackToMenu);
 
     // === Додати сторінки до стеку ===
     stack->addWidget(menuPage);         // index 0
     stack->addWidget(mediaPlayerPage);  // index 1
     stack->addWidget(textViewerPage);   // index 2
+    stack->addWidget(imageViewerPage);  // index 3
 
     // === Стартова сторінка — меню ===
     stack->setCurrentWidget(menuPage);
@@ -53,7 +93,7 @@ MainWindow::MainWindow(QWidget *parent)
     connect(mediaButton, &QPushButton::clicked, this, &MainWindow::openMediaPlayer);
     connect(textButton, &QPushButton::clicked, this, &MainWindow::openTextReader);
     connect(imageButton, &QPushButton::clicked, this, &MainWindow::openImageViewer);
-    connect(fileExplorerButton, &QPushButton::clicked, this, &MainWindow::openFileExplorer);
+    connect(cameraButton, &QPushButton::clicked, this, &MainWindow::openCamera);
 }
 
 MainWindow::~MainWindow() {}
@@ -70,10 +110,10 @@ void MainWindow::openTextReader() {
 
 void MainWindow::openImageViewer() {
     qDebug() << "Opening Image Viewer...";
-    // Можеш додати imageViewerPage за аналогією
+    stack->setCurrentWidget(imageViewerPage);
 }
 
-void MainWindow::openFileExplorer() {
+void MainWindow::openCamera() {
     QString dir = QFileDialog::getExistingDirectory(this, "Open Folder", QDir::homePath());
     if (!dir.isEmpty()) {
         qDebug() << "Selected folder:" << dir;
