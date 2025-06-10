@@ -79,6 +79,10 @@ MediaPlayer::MediaPlayer(QWidget *parent)
     addToPlaylistButton->setFixedSize(24, 24);
     addToPlaylistButton->setFlat(true);
 
+    removeFromPlaylistButton = new QPushButton("➖", playlistPanel);
+    removeFromPlaylistButton->setFixedSize(24, 24);
+    removeFromPlaylistButton->setFlat(true);
+
     QPushButton *backButton = new QPushButton("Back to Menu", this);
     backButton->setFixedSize(100, 30);
     connect(backButton, &QPushButton::clicked, this, [=]() {
@@ -88,7 +92,8 @@ MediaPlayer::MediaPlayer(QWidget *parent)
     QHBoxLayout *playlistHeader = new QHBoxLayout();
     playlistHeader->addWidget(playlistTitle);
     playlistHeader->addStretch();
-    playlistHeader->addWidget(addToPlaylistButton);
+    playlistHeader->addWidget(removeFromPlaylistButton);  // ➖ зліва
+    playlistHeader->addWidget(addToPlaylistButton);       // ➕ справа
 
     playlistWidget = new QListWidget(playlistPanel);
     playlistWidget->setStyleSheet("background-color: #0A0F22; color: white;");
@@ -145,12 +150,8 @@ MediaPlayer::MediaPlayer(QWidget *parent)
 
     // === Події ===
     connect(playPauseButton, &QPushButton::clicked, this, &MediaPlayer::togglePlayPause);
-    connect(rewindButton, &QPushButton::clicked, [=]() {
-        mediaPlayer->setPosition(mediaPlayer->position() - 10000);
-    });
-    connect(forwardButton, &QPushButton::clicked, [=]() {
-        mediaPlayer->setPosition(mediaPlayer->position() + 10000);
-    });
+    connect(rewindButton, &QPushButton::clicked, this, &MediaPlayer::rewind);
+    connect(forwardButton, &QPushButton::clicked, this, &MediaPlayer::fastForward);
     connect(volumeSlider, &QSlider::valueChanged, [=](int value) {
         audioOutput->setVolume(value / 100.0);
     });
@@ -176,35 +177,24 @@ MediaPlayer::MediaPlayer(QWidget *parent)
         }
     });
 
-    auto playItemAtIndex = [&](int index) {
-    if (index >= 0 && index < playlistWidget->count()) {
-        currentPlaylistIndex = index;
-        playlistWidget->setCurrentRow(currentPlaylistIndex);
-
-        QListWidgetItem *item = playlistWidget->item(index);
-        QString filePath = item->data(Qt::UserRole).toString();
-        mediaPlayer->setSource(QUrl::fromLocalFile(filePath));
-        QTimer::singleShot(150, this, [=]() {
-            updateMediaDisplay();
-        });
-
-        QTimer::singleShot(100, [=]() {
-            mediaPlayer->setPosition(100);  // легенько вперед
-            mediaPlayer->play();
-        });
-
-        playPauseButton->setIcon(QIcon("../icons/stop_button_proj.png"));
+    connect(removeFromPlaylistButton, &QPushButton::clicked, [=]() {
+        QListWidgetItem *selectedItem = playlistWidget->currentItem();
+        if (selectedItem) {
+            int row = playlistWidget->row(selectedItem);
+            delete playlistWidget->takeItem(row);
+            // якщо видалений активний трек, скинути або перемкнути:
+            if (row == currentPlaylistIndex) {
+                mediaPlayer->stop();
+                playPauseButton->setIcon(QIcon("../icons/play_button_proj.png"));
+                currentPlaylistIndex = -1;
+            } else if (row < currentPlaylistIndex) {
+                currentPlaylistIndex--; // змістити індекс вліво
+            }
         }
-    };
-
-
-
-    connect(prevTrackButton, &QPushButton::clicked, [=]() {
-        if (currentPlaylistIndex > 0) playItemAtIndex(currentPlaylistIndex - 1);
     });
-    connect(nextTrackButton, &QPushButton::clicked, [=]() {
-        if (currentPlaylistIndex < playlistWidget->count() - 1) playItemAtIndex(currentPlaylistIndex + 1);
-    });
+
+    connect(prevTrackButton, &QPushButton::clicked, this, &MediaPlayer::previousTrack);
+    connect(nextTrackButton, &QPushButton::clicked, this, &MediaPlayer::nextTrack);
     connect(playlistWidget, &QListWidget::itemClicked, [=](QListWidgetItem *item) {
         int index = playlistWidget->row(item);
         playItemAtIndex(index);
@@ -225,6 +215,54 @@ void MediaPlayer::openFile() {
     }
 }
 
+void MediaPlayer::playItemAtIndex(int index) {
+    if (index >= 0 && index < playlistWidget->count()) {
+        currentPlaylistIndex = index;
+        playlistWidget->setCurrentRow(currentPlaylistIndex);
+
+        QListWidgetItem *item = playlistWidget->item(index);
+        QString filePath = item->data(Qt::UserRole).toString();
+        mediaPlayer->setSource(QUrl::fromLocalFile(filePath));
+
+        QTimer::singleShot(150, this, [=]() {
+            updateMediaDisplay();
+        });
+
+        QTimer::singleShot(100, this, [=]() {
+            mediaPlayer->setPosition(100);
+            mediaPlayer->play();
+        });
+
+        playPauseButton->setIcon(QIcon("../icons/stop_button_proj.png"));
+    }
+}
+
+void MediaPlayer::fastForward() {
+    mediaPlayer->setPosition(mediaPlayer->position() + 10000);
+}
+
+void MediaPlayer::rewind() {
+    mediaPlayer->setPosition(mediaPlayer->position() - 10000);
+}
+
+void MediaPlayer::increaseVolume() {
+    int value = volumeSlider->value();
+    if (value < 100) {
+        value += 5;
+        if (value > 100) value = 100;
+        volumeSlider->setValue(value);
+    }
+}
+
+void MediaPlayer::decreaseVolume() {
+    int value = volumeSlider->value();
+    if (value > 0) {
+        value -= 5;
+        if (value < 0) value = 0;
+        volumeSlider->setValue(value);
+    }
+}
+
 void MediaPlayer::updateMediaDisplay() {
     if (mediaPlayer->hasVideo()) {
         mediaStack->setCurrentWidget(videoWidget);
@@ -241,6 +279,16 @@ void MediaPlayer::togglePlayPause() {
         mediaPlayer->play();
         playPauseButton->setIcon(QIcon("../icons/stop_button_proj.png"));
     }
+}
+
+void MediaPlayer::nextTrack() {
+    if (currentPlaylistIndex < playlistWidget->count() - 1)
+        playItemAtIndex(currentPlaylistIndex + 1);
+}
+
+void MediaPlayer::previousTrack() {
+    if (currentPlaylistIndex > 0)
+        playItemAtIndex(currentPlaylistIndex - 1);
 }
 
 void MediaPlayer::updateDuration(qint64 duration) {
@@ -263,6 +311,3 @@ void MediaPlayer::updatePosition(qint64 position) {
     QString timeStr = currentTime.toString("hh:mm:ss") + " / " + totalTime.toString("hh:mm:ss");
     timeDisplay->setText(timeStr); 
 }
-
-    
-

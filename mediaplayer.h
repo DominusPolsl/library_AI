@@ -21,13 +21,20 @@ class MediaPlayer : public QWidget {
 public:
     MediaPlayer(QWidget *parent = nullptr);
     ~MediaPlayer();
+    void togglePlayPause();
+    void fastForward();
+    void rewind();
+    void nextTrack();
+    void previousTrack();
+    void increaseVolume();
+    void decreaseVolume();
 
 private slots:
     void openFile();
-    void togglePlayPause();
     void updatePosition(qint64 position);
     void updateDuration(qint64 duration);
     void updateMediaDisplay();
+    void playItemAtIndex(int index);
 
 private:
     QMediaPlayer *mediaPlayer;
@@ -38,6 +45,7 @@ private:
     QLabel *imageLabel;
     QListWidget *playlistWidget;
     QPushButton *addToPlaylistButton;
+    QPushButton *removeFromPlaylistButton;
     bool isPlaylistVisible = false;
 
     QPushButton *openButton;

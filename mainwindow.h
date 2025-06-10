@@ -3,6 +3,7 @@
 #include <QPushButton>
 #include <QVBoxLayout>
 #include <QStackedWidget>
+#include <QProcess>
 
 #include "textviewer.h"
 #include "mediaplayer.h"
@@ -36,6 +37,9 @@ private:
     QPushButton *textButton;
     QPushButton *imageButton;
     QPushButton *cameraButton;
+
+    QProcess *cameraProcess = nullptr;
+    bool cameraRunning = false;
 
     GestureServer *gestureServer; // 🔹 нове поле для сервера
 };

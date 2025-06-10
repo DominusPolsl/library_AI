@@ -32,7 +32,7 @@ MainWindow::MainWindow(QWidget *parent)
     mediaButton = new QPushButton("🎵 Video / Music Player");
     textButton = new QPushButton("📄 Text Viewer");
     imageButton = new QPushButton("🖼️ Image Viewer");
-    cameraButton = new QPushButton("📁 File Explorer");
+    cameraButton = new QPushButton("📷 Camera");
 
     QFont btnFont;
     btnFont.setPointSize(14);
@@ -68,14 +68,75 @@ MainWindow::MainWindow(QWidget *parent)
     connect(gestureServer, &GestureServer::gestureReceived, this, [=](const QString &cmd) {
         QWidget *current = stack->currentWidget();
 
-        if (auto tv = qobject_cast<TextViewer *>(current)) {
-            if (cmd == "next") tv->nextPage();
-            else if (cmd == "prev") tv->prevPage();
+        // Жести відкриття програм — лише якщо користувач на головному меню
+        if (stack->currentWidget() == menuPage) {
+            if (cmd == "open_media") {
+                openMediaPlayer();
+                return;
+            } else if (cmd == "open_text") {
+                openTextReader();
+                return;
+            } else if (cmd == "open_image") {
+                openImageViewer();
+                return;
+            } else if (cmd == "open_camera") {
+                openCamera();
+                return;
+            }
         }
 
-        // тут буде також MediaPlayer пізніше
-    });
 
+        // === Обробка жестів для TextViewer ===
+        if (auto tv = qobject_cast<TextViewer *>(current)) {
+            if (cmd == "next") {
+                tv->nextPage();
+            } else if (cmd == "prev") {
+                tv->prevPage();
+            } else if (cmd == "go_menu") {
+                goBackToMenu();
+            }
+        }
+
+        // === Обробка жестів для MediaPlayer ===
+        if (auto mp = qobject_cast<MediaPlayer *>(current)) {
+            if (cmd == "toggle_play_pause") {
+                mp->togglePlayPause();
+            } else if (cmd == "fast_forward") {
+                mp->fastForward();
+            } else if (cmd == "rewind") {
+                mp->rewind();
+            } else if (cmd == "next_track") {
+                mp->nextTrack();
+            } else if (cmd == "prev_track") {
+                mp->previousTrack();
+            } else if (cmd == "volume_up") {
+                mp->increaseVolume();
+            } else if (cmd == "volume_down") {
+                mp->decreaseVolume();
+            } else if (cmd == "go_menu") {
+                goBackToMenu();
+            }        
+        }
+
+
+        if (auto iv = qobject_cast<ImageViewer *>(current)) {
+            if (cmd == "pan_left") {
+                iv->panImage(-50, 0);
+            } else if (cmd == "pan_right") {
+                iv->panImage(50, 0);
+            } else if (cmd == "pan_up") {
+                iv->panImage(0, -50);
+            } else if (cmd == "pan_down") {
+                iv->panImage(0, 50);
+            } else if (cmd == "zoom_in") {
+                iv->zoomInAtCenter();
+            } else if (cmd == "zoom_out") {
+                iv->zoomOutAtCenter();
+            } else if (cmd == "go_menu") {
+                goBackToMenu();
+            }
+        }
+    });
     connect(textViewerPage, &TextViewer::backToMenuRequested, this, &MainWindow::goBackToMenu);
     connect(mediaPlayerPage, &MediaPlayer::backToMenuRequested, this, &MainWindow::goBackToMenu);
     connect(imageViewerPage, &ImageViewer::returnToMainMenuClicked, this, &MainWindow::goBackToMenu);
@@ -114,11 +175,40 @@ void MainWindow::openImageViewer() {
 }
 
 void MainWindow::openCamera() {
-    QString dir = QFileDialog::getExistingDirectory(this, "Open Folder", QDir::homePath());
-    if (!dir.isEmpty()) {
-        qDebug() << "Selected folder:" << dir;
-        // Додай логіку, якщо потрібно
+    if (!cameraRunning) {
+        // 🔁 Запуск gesture_client.py
+        cameraProcess = new QProcess(this);
+        cameraProcess->setProgram("python");
+        cameraProcess->setArguments(QStringList() << "../gesture_client.py");
+        cameraProcess->setProcessChannelMode(QProcess::MergedChannels);
+        cameraProcess->setReadChannel(QProcess::StandardOutput);
+
+        connect(cameraProcess, &QProcess::readyRead, this, [=]() {
+            QByteArray output = cameraProcess->readAllStandardOutput();
+            qDebug() << "[PYTHON]" << output;
+        });
+
+        cameraProcess->start();
+        if (!cameraProcess->waitForStarted(1000)) {
+            qDebug() << "Не вдалося запустити gesture_client.py:" << cameraProcess->errorString();
+            delete cameraProcess;
+            cameraProcess = nullptr;
+            return;
+        }
+
+        cameraRunning = true;
+        cameraButton->setText("🛑 Stop Camera");
+    } else {
+        // 🔁 Зупинка gesture_client.py
+        if (cameraProcess) {
+            cameraProcess->kill();
+            cameraProcess->deleteLater();
+            cameraProcess = nullptr;
+        }
+        cameraRunning = false;
+        cameraButton->setText("📷 Camera");
     }
+    qDebug() << "Starting/Stopping Camera...";
 }
 
 void MainWindow::goBackToMenu() {

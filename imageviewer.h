@@ -17,6 +17,11 @@ class ImageViewer : public QWidget
 
 public:
     explicit ImageViewer(const QStringList &recentImages, QWidget *parent = nullptr);
+    // Panowanie (strzałki):
+    void panImage(int dx, int dy);
+    // Pomocnicze: zoom w centrum widoku
+    void zoomInAtCenter();
+    void zoomOutAtCenter();
     ~ImageViewer() override;
 
 signals:
@@ -40,13 +45,6 @@ private:
     // Pełna funkcja zoomująca wokół punktu viewportu
     void zoom(double factor, const QPointF &viewportAnchor);
 
-    // Pomocnicze: zoom w centrum widoku
-    void zoomInAtCenter();
-    void zoomOutAtCenter();
-
-    // Panowanie (strzałki):
-    void panImage(int dx, int dy);
-
     QLabel      *imageLabel;
     QScrollArea *scrollArea;
     QPushButton *openButton;
@@ -62,4 +60,3 @@ private:
     // dodatkowy zoom zadany przez użytkownika
     double       userScale;
 };
-
