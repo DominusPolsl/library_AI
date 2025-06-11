@@ -64,53 +64,68 @@ ImageViewer::~ImageViewer()
 
 void ImageViewer::openImage()
 {
-    QString fileName = QFileDialog::getOpenFileName(
+    try
+    {
+        QString fileName = QFileDialog::getOpenFileName(
         this,
         tr("Wybierz plik obrazu"),
         QString(),
         tr("Obrazy (*.png *.jpg *.jpeg *.bmp *.gif);;Wszystkie pliki (*)")
-    );
-    if (fileName.isEmpty())
-        return;
-
-    QImage img;
-    if (!img.load(fileName)) {
-        QMessageBox::warning(
-            this,
-            tr("Image Viewer"),
-            tr("Nie udało się wczytać obrazu:\n%1").arg(fileName)
         );
-        return;
+
+        
+        if (fileName.isEmpty())
+            return;
+
+        QImage img;
+        if (!img.load(fileName)) {
+            QMessageBox::warning(
+                this,
+                tr("Image Viewer"),
+                tr("Nie udało się wczytać obrazu:\n%1").arg(fileName)
+            );
+        } 
+
+        currentImage = img;
+        lastLoadedPath = fileName;
+
+        // 2) Oblicz fitFactor: max. 90% viewportu
+        QSize vpSz = scrollArea->viewport()->size();
+        if (!currentImage.isNull() && vpSz.width() > 0 && vpSz.height() > 0) {
+            QSize maxSz(int(vpSz.width()  * 0.9),
+                        int(vpSz.height() * 0.9));
+            QSize origSz = currentImage.size();
+            double fx = double(maxSz.width())  / origSz.width();
+            double fy = double(maxSz.height()) / origSz.height();
+            fitFactor = qMin(fx, fy);
+            if (fitFactor > 1.0) {
+                fitFactor = 1.0; // nie powiększaj, jeśli oryginał jest mniejszy
+            }
+        } else {
+            fitFactor = 1.0;
+        }
+
+        // 3) Reset dodatkowego zoomu użytkownika
+        userScale = 1.0;
+
+        // 4) Wyświetl obraz (fitFactor * userScale)
+        updateImageDisplay();
+
+        // 5) Powiadom MainWindow o nowej ścieżce
+        emit fileAdded(fileName);
     }
+    catch (const std::exception &e) {
+    qDebug() << "Unexpected error:" << e.what();
+    }
+    
+    
+
+    
 
     // 1) Zachowaj oryginał i ścieżkę
-    currentImage = img;
-    lastLoadedPath = fileName;
+    
 
-    // 2) Oblicz fitFactor: max. 90% viewportu
-    QSize vpSz = scrollArea->viewport()->size();
-    if (!currentImage.isNull() && vpSz.width() > 0 && vpSz.height() > 0) {
-        QSize maxSz(int(vpSz.width()  * 0.9),
-                    int(vpSz.height() * 0.9));
-        QSize origSz = currentImage.size();
-        double fx = double(maxSz.width())  / origSz.width();
-        double fy = double(maxSz.height()) / origSz.height();
-        fitFactor = qMin(fx, fy);
-        if (fitFactor > 1.0) {
-            fitFactor = 1.0; // nie powiększaj, jeśli oryginał jest mniejszy
-        }
-    } else {
-        fitFactor = 1.0;
-    }
-
-    // 3) Reset dodatkowego zoomu użytkownika
-    userScale = 1.0;
-
-    // 4) Wyświetl obraz (fitFactor * userScale)
-    updateImageDisplay();
-
-    // 5) Powiadom MainWindow o nowej ścieżce
-    emit fileAdded(fileName);
+    
 }
 
 void ImageViewer::clearImage()
