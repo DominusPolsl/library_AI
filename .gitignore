@@ -5,3 +5,4 @@ CMakelists.txt
 installer/
 dist/
 icons/
+*.spec
