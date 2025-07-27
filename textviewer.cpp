@@ -98,7 +98,7 @@ void TextViewer::openPdf() {
 void TextViewer::showPage() {
     if (!pdfDoc || pdfDoc->pageCount() <= 0) return;  // Koniec metody przy braku dokumentu
 
-    QSize imageSize(1300, 1000);                      // Rozdzielczość renderowania strony
+    QSize imageSize(1600, 1000);                      // Rozdzielczość renderowania strony
     QPdfDocumentRenderOptions options;                // Opcje renderowania (domyślne)
 
     // Renderowanie aktualnej strony jako obrazu

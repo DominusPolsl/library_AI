@@ -25,48 +25,47 @@ public:
     ~MediaPlayer();
 
     // Publiczne funkcje sterujące (używane przez gesty i przyciski)
-    void togglePlayPause();   // Odtwórz/pauzuj
-    void fastForward();       // Przewiń do przodu o 10 sek
-    void rewind();            // Cofnij o 10 sek
-    void nextTrack();         // Następny utwór z playlisty
-    void previousTrack();     // Poprzedni utwór z playlisty
-    void increaseVolume();    // Zwiększ głośność
-    void decreaseVolume();    // Zmniejsz głośność
-
-private slots:
-    // Funkcje reagujące na działania użytkownika
-    void openFile();                      // Otwórz plik z dysku
-    void updatePosition(qint64 position); // Aktualizuj czas i suwak
-    void updateDuration(qint64 duration); // Ustaw maksymalny czas suwaka
-    void updateMediaDisplay();            // Przełącz widok między wideo a obrazkiem
-    void playItemAtIndex(int index);      // Odtwórz element z playlisty
+    void togglePlayPause();   
+    void fastForward();       
+    void rewind();           
+    void nextTrack();         
+    void previousTrack();     
+    void increaseVolume();   
+    void decreaseVolume();    
 
 private:
-    QMediaPlayer *mediaPlayer;        // Główne źródło mediów (obsługuje dźwięk i obraz)
-    QAudioOutput *audioOutput;        // Wyjście dźwiękowe (dla głośności)
-    QVideoWidget *videoWidget;        // Widżet do odtwarzania wideo
+    QMediaPlayer *mediaPlayer;        
+    QAudioOutput *audioOutput;        
+    QVideoWidget *videoWidget;        
 
-    QFrame *playlistPanel;            // Panel boczny z playlistą
-    QStackedLayout *mediaStack;       // Przełącznik między wideo a obrazem (placeholder)
-    QLabel *imageLabel;               // Obrazek używany gdy plik to tylko audio
-    QListWidget *playlistWidget;      // Lista utworów/plików multimedialnych
-    QPushButton *addToPlaylistButton;       // Dodaj do playlisty
-    QPushButton *removeFromPlaylistButton;  // Usuń z playlisty
-    bool isPlaylistVisible = false;         // Czy panel playlisty jest widoczny?
+    QFrame *playlistPanel;            
+    QStackedLayout *mediaStack;       
+    QLabel *imageLabel;               
+    QListWidget *playlistWidget;      
+    QPushButton *addToPlaylistButton;       
+    QPushButton *removeFromPlaylistButton;  
+    bool isPlaylistVisible = false;         
 
-    QPushButton *openButton;          // Otwórz plik
-    QPushButton *playPauseButton;     // Play/pause
-    QPushButton *rewindButton;        // Cofnij 10s
-    QPushButton *forwardButton;       // Do przodu 10s
-    QPushButton *playlistButton;      // Pokaż/ukryj playlistę
-    QPushButton *prevTrackButton;     // Poprzedni utwór
-    QPushButton *nextTrackButton;     // Następny utwór
-    int currentPlaylistIndex = -1;    // Numer aktualnie odtwarzanego elementu w liście
+    QPushButton *openButton;          
+    QPushButton *playPauseButton;     
+    QPushButton *rewindButton;        
+    QPushButton *forwardButton;       
+    QPushButton *playlistButton;      
+    QPushButton *prevTrackButton;     
+    QPushButton *nextTrackButton;    
+    int currentPlaylistIndex = -1;    
 
-    QSlider *progressSlider;          // Suwak postępu odtwarzania
-    QSlider *volumeSlider;            // Suwak głośności
-    QLabel *timeDisplay;              // Tekstowy wyświetlacz czasu (hh:mm:ss)
-    qint64 totalDuration = 0;         // Całkowita długość aktualnego pliku (w ms)
+    QSlider *progressSlider;          
+    QSlider *volumeSlider;            
+    QLabel *timeDisplay;              
+    qint64 totalDuration = 0;         
+
+    // Funkcje reagujące na działania użytkownika
+    void openFile();                     
+    void updatePosition(qint64 position); 
+    void updateDuration(qint64 duration); 
+    void updateMediaDisplay();            
+    void playItemAtIndex(int index);      
 
 signals:
     // Sygnał informujący, że użytkownik chce wrócić do menu głównego

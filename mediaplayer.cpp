@@ -3,37 +3,32 @@
 #include <QFileInfo>
 #include <QTimer>
 
-#include <QAudioFormat>      // формат аудіо
-#include <QAudioOutput>      // вихід
-#include <QAudioDevice>      // пристрої виводу
-#include <QMediaDevices>     // доступні пристрої
-
-
+#include <QAudioFormat>      
+#include <QAudioOutput>      
+#include <QAudioDevice>      
+#include <QMediaDevices>     
 
 MediaPlayer::MediaPlayer(QWidget *parent)
     : QWidget(parent)
 {
-    // === Widok wideo (dla plików MP4, AVI itp.) ===
     videoWidget = new QVideoWidget(this);  // Obiekt do wyświetlania obrazu wideo
 
-    // === Obrazek zastępczy — widoczny tylko przy odtwarzaniu plików audio (np. MP3) ===
+    // Obrazek zastępczy — widoczny tylko przy odtwarzaniu plików audio
     imageLabel = new QLabel(this);
     imageLabel->setAlignment(Qt::AlignCenter);
-    QPixmap placeholder("../icons/music-notes.png");
+    QPixmap placeholder("./icons/music-notes.png");
     imageLabel->setPixmap(placeholder.scaled(640, 360, Qt::KeepAspectRatio, Qt::SmoothTransformation));
     imageLabel->setVisible(false);  // Ukryty na start
 
-    rewindButton = new QPushButton("⏪", this);   // Cofnij 10 sekund
-    playPauseButton = new QPushButton(this);     // Przycisk do pauzy/startu
-    playPauseButton->setIcon(QIcon("../icons/play_button_proj.png"));
-    playPauseButton->setIconSize(QSize(30, 30)); // Ikona startowa: play
+    rewindButton = new QPushButton("⏪", this);   
+    playPauseButton = new QPushButton(this);     
+    playPauseButton->setIcon(QIcon("./icons/play_button_proj.png"));
+    playPauseButton->setIconSize(QSize(30, 30)); 
 
-    forwardButton = new QPushButton("⏩", this);  // Do przodu 10 sekund
-    playlistButton = new QPushButton("📂", this); // Pokaż/ukryj playlistę
-    prevTrackButton = new QPushButton("⏮", this); // Poprzedni utwór
-    nextTrackButton = new QPushButton("⏭", this); // Następny utwór
-
-    // Wszystkie przyciski są "płaskie", bez ramki
+    forwardButton = new QPushButton("⏩", this);  
+    playlistButton = new QPushButton("📂", this); 
+    prevTrackButton = new QPushButton("⏮", this); 
+    nextTrackButton = new QPushButton("⏭", this); 
 
     prevTrackButton->setFlat(true);
     nextTrackButton->setFlat(true);
@@ -43,44 +38,37 @@ MediaPlayer::MediaPlayer(QWidget *parent)
     playlistButton->setFlat(true);
 
     QLabel *soundIcon = new QLabel(this);
-    QPixmap soundPixmap("../icons/volume_icon.png"); 
+    QPixmap soundPixmap("./icons/volume_icon.png"); 
     soundIcon->setPixmap(soundPixmap.scaled(20, 20, Qt::KeepAspectRatio, Qt::SmoothTransformation));
 
-    // === Suwak postępu odtwarzania (czas wideo/audio) ===
+    // Suwak - odtwarzania wideo/audio
     progressSlider = new QSlider(Qt::Horizontal, this);
-    // Tworzymy poziomy suwak, który będzie pokazywał bieżący czas odtwarzania
-    // oraz pozwalał użytkownikowi przewinąć do wybranego miejsca w pliku
 
-    // === Suwak głośności ===
+    // Suwak głośności
     volumeSlider = new QSlider(Qt::Horizontal, this);
-    // Tworzymy poziomy suwak służący do regulacji głośności
-    volumeSlider->setRange(0, 100);    // Zakres od 0 (cisza) do 100 (maksymalna głośność)
-    volumeSlider->setValue(100);       // Domyślna wartość to 100%
+    volumeSlider->setRange(0, 100);    
+    volumeSlider->setValue(100);   // Głosność 100%   
 
-    // === Wyświetlacz czasu odtwarzania ===
     timeDisplay = new QLabel("00:00:00 / 00:00:00", this);
     // Etykieta tekstowa, która pokazuje aktualny czas odtwarzania i całkowity czas
-    timeDisplay->setAlignment(Qt::AlignRight);  // Wyrównanie tekstu do prawej
+    timeDisplay->setAlignment(Qt::AlignRight); 
     timeDisplay->setStyleSheet("font-family: monospace; font-size: 14px;");
-    // Ustawiamy czcionkę monospace (stałej szerokości) dla czytelności
-
-    // === Konfiguracja systemu audio ===
+    
+    // Konfiguracja systemu audio
     QAudioDevice device = QMediaDevices::defaultAudioOutput();
-    // Pobieramy domyślne urządzenie wyjściowe audio (np. głośniki)
+    // Pobieranie domyślnego urządzenia wyjściowego audio
     audioOutput = new QAudioOutput(device, this);
-    // Tworzymy obiekt audio związany z tym urządzeniem
-    audioOutput->setVolume(1.0); // Głośność ustawiona na 100% (1.0)
+    // Tworzenie obiektu audio związanego z tym urządzeniem
+    audioOutput->setVolume(1.0);
 
-    // === Główny obiekt odtwarzacza multimediów ===
+    // Główny obiekt odtwarzacza multimediów
     mediaPlayer = new QMediaPlayer(this);
-    // Inicjalizujemy QMediaPlayer — główny komponent do odtwarzania wideo/audio
 
-    // Przypisujemy widżet wideo do odtwarzacza (jeśli plik zawiera obraz)
+    // Przypisanie widżetu wideo do odtwarzacza (jeśli plik zawiera obraz)
     mediaPlayer->setVideoOutput(videoWidget);
 
-    // Przypisujemy wyjście dźwięku (głośniki/słuchawki) do odtwarzacza
+    // Przypisanie wyjściowego dźwięku do odtwarzacza
     mediaPlayer->setAudioOutput(audioOutput);
-
 
     // Panel boczny z playlistą (na początku ukryty)
     playlistPanel = new QFrame(this);
@@ -174,38 +162,37 @@ MediaPlayer::MediaPlayer(QWidget *parent)
     mainLayout->addLayout(controlsLayout);
     mainLayout->addLayout(bottomLayout);
 
-    // Finalizacja
     setLayout(mainLayout);
     showMaximized();
     setWindowTitle("Qt Media Player");
 
 
-        // === Połączenia przycisków sterujących ===
-    connect(playPauseButton, &QPushButton::clicked, this, &MediaPlayer::togglePlayPause);  // Play/Pause
-    connect(rewindButton, &QPushButton::clicked, this, &MediaPlayer::rewind);              // Cofnij 10s
-    connect(forwardButton, &QPushButton::clicked, this, &MediaPlayer::fastForward);        // Do przodu 10s
+        // Połączenia przycisków sterujących 
+    connect(playPauseButton, &QPushButton::clicked, this, &MediaPlayer::togglePlayPause);  
+    connect(rewindButton, &QPushButton::clicked, this, &MediaPlayer::rewind);             
+    connect(forwardButton, &QPushButton::clicked, this, &MediaPlayer::fastForward);        
 
-    // === Zmiana głośności na podstawie suwaka ===
+    //  Zmiana głośności na podstawie suwaka 
     connect(volumeSlider, &QSlider::valueChanged, [=](int value) {
         audioOutput->setVolume(value / 100.0);
     });
 
-    // === Przesuwanie odtwarzania przez suwak postępu ===
+    //  Przesuwanie odtwarzania przez suwak postępu 
     connect(progressSlider, &QSlider::sliderMoved, [=](int value) {
         mediaPlayer->setPosition(value * 1000); // sekundy → ms
     });
 
-    // === Aktualizacje suwaka i zegara podczas odtwarzania ===
+    //  Aktualizacje suwaka i zegara podczas odtwarzania 
     connect(mediaPlayer, &QMediaPlayer::positionChanged, this, &MediaPlayer::updatePosition);
     connect(mediaPlayer, &QMediaPlayer::durationChanged, this, &MediaPlayer::updateDuration);
 
-    // === Pokaż/ukryj playlistę po kliknięciu przycisku 📂 ===
+    //  Pokaż/ukryj playlistę po kliknięciu przycisku 📂 
     connect(playlistButton, &QPushButton::clicked, [=]() {
         isPlaylistVisible = !isPlaylistVisible;
         playlistPanel->setVisible(isPlaylistVisible);
     });
 
-    // === Dodanie pliku do playlisty (z okna dialogowego) ===
+    //  Dodanie pliku do playlisty z exploratora plików
     connect(addToPlaylistButton, &QPushButton::clicked, [=]() {
         QString fileName = QFileDialog::getOpenFileName(this, "Add to Playlist",
                                                         QDir::homePath(),
@@ -217,7 +204,7 @@ MediaPlayer::MediaPlayer(QWidget *parent)
         }
     });
 
-    // === Usuwanie zaznaczonego pliku z playlisty ===
+    //  Usuwanie zaznaczonego pliku z playlisty 
     connect(removeFromPlaylistButton, &QPushButton::clicked, [=]() {
         QListWidgetItem *selectedItem = playlistWidget->currentItem();
         if (selectedItem) {
@@ -226,7 +213,7 @@ MediaPlayer::MediaPlayer(QWidget *parent)
             // Obsługa sytuacji gdy usunięto aktualnie odtwarzany plik
             if (row == currentPlaylistIndex) {
                 mediaPlayer->stop();
-                playPauseButton->setIcon(QIcon("../icons/play_button_proj.png"));
+                playPauseButton->setIcon(QIcon("./icons/play_button_proj.png"));
                 currentPlaylistIndex = -1;
             } else if (row < currentPlaylistIndex) {
                 currentPlaylistIndex--;
@@ -234,11 +221,11 @@ MediaPlayer::MediaPlayer(QWidget *parent)
         }
     });
 
-    // === Przejście do poprzedniego/następnego utworu ===
+    //  Przejście do poprzedniego/następnego utworu 
     connect(prevTrackButton, &QPushButton::clicked, this, &MediaPlayer::previousTrack);
     connect(nextTrackButton, &QPushButton::clicked, this, &MediaPlayer::nextTrack);
 
-    // === Odtwórz plik po kliknięciu na liście ===
+    //  Odtwórz plik po kliknięciu na liście 
     connect(playlistWidget, &QListWidget::itemClicked, [=](QListWidgetItem *item) {
         int index = playlistWidget->row(item);
         playItemAtIndex(index);
@@ -247,21 +234,21 @@ MediaPlayer::MediaPlayer(QWidget *parent)
 
 MediaPlayer::~MediaPlayer() {}
 
-// === Otwieranie pliku multimedialnego przez okno dialogowe ===
+//  Otwieranie pliku multimedialnego przez okno dialogowe 
 void MediaPlayer::openFile() {
     QString fileName = QFileDialog::getOpenFileName(this, "Open Media File",
                                                     QDir::homePath(),
-                                                    "Media Files (*.mp3 *.mp4 *.wav *.avi *.mkv)");
+                                                    "Media Files (*.mp3 *.mp4 *.m4a *.wav *.avi *.mkv)");
     if (!fileName.isEmpty()) {
         mediaPlayer->setSource(QUrl::fromLocalFile(fileName)); // ustawienie źródła
         mediaPlayer->play();                                   // rozpoczęcie odtwarzania
         updateMediaDisplay();                                  // pokaż obraz/wideo
-        playPauseButton->setIcon(QIcon("../icons/stop_button_proj.png"));
+        playPauseButton->setIcon(QIcon("./icons/stop_button_proj.png"));
     }
 }
 
 
-// === Odtwórz plik z playlisty według indeksu ===
+//  Odtwieranie pliku z playlisty według indeksu 
 void MediaPlayer::playItemAtIndex(int index) {
     if (index >= 0 && index < playlistWidget->count()) {
         currentPlaylistIndex = index;
@@ -270,28 +257,28 @@ void MediaPlayer::playItemAtIndex(int index) {
         QString filePath = playlistWidget->item(index)->data(Qt::UserRole).toString();
         mediaPlayer->setSource(QUrl::fromLocalFile(filePath));
 
-        // Odśwież widok i rozpocznij odtwarzanie z małym opóźnieniem
+        // Odświeżanie widoku i rozpoczęcie odtwarzania z małym opóźnieniem
         QTimer::singleShot(150, this, [=]() { updateMediaDisplay(); });
         QTimer::singleShot(100, this, [=]() {
             mediaPlayer->setPosition(100);
             mediaPlayer->play();
         });
 
-        playPauseButton->setIcon(QIcon("../icons/stop_button_proj.png"));
+        playPauseButton->setIcon(QIcon("./icons/stop_button_proj.png"));
     }
 }
 
-// === Przewijanie do przodu o 10 sekund ===
+//  Przewijanie do przodu o 10 sekund 
 void MediaPlayer::fastForward() {
     mediaPlayer->setPosition(mediaPlayer->position() + 10000);
 }
 
-// === Cofanie o 10 sekund ===
+//  Cofanie o 10 sekund 
 void MediaPlayer::rewind() {
     mediaPlayer->setPosition(mediaPlayer->position() - 10000);
 }
 
-// === Zwiększanie głośności o 5 ===
+//  Zwiększanie głośności o 5 
 void MediaPlayer::increaseVolume() {
     int value = volumeSlider->value();
     if (value < 100) {
@@ -300,7 +287,7 @@ void MediaPlayer::increaseVolume() {
     }
 }
 
-// === Zmniejszanie głośności o 5 ===
+//  Zmniejszanie głośności o 5 
 void MediaPlayer::decreaseVolume() {
     int value = volumeSlider->value();
     if (value > 0) {
@@ -309,7 +296,7 @@ void MediaPlayer::decreaseVolume() {
     }
 }
 
-// === Przełączanie widoku — wideo lub obrazek muzyczny ===
+//  Przełączanie widoku — wideo lub obrazek muzyczny 
 void MediaPlayer::updateMediaDisplay() {
     if (mediaPlayer->hasVideo()) {
         mediaStack->setCurrentWidget(videoWidget);
@@ -318,38 +305,38 @@ void MediaPlayer::updateMediaDisplay() {
     }
 }
 
-// === Pauza / odtwarzanie + zmiana ikony ===
+//  Pauza / odtwarzanie + zmiana ikony 
 void MediaPlayer::togglePlayPause() {
     if (mediaPlayer->playbackState() == QMediaPlayer::PlayingState) {
         mediaPlayer->pause();
-        playPauseButton->setIcon(QIcon("../icons/play_button_proj.png"));
+        playPauseButton->setIcon(QIcon("./icons/play_button_proj.png"));
     } else {
         mediaPlayer->play();
-        playPauseButton->setIcon(QIcon("../icons/stop_button_proj.png"));
+        playPauseButton->setIcon(QIcon("./icons/stop_button_proj.png"));
     }
 }
 
-// === Przejdź do następnego utworu na playliście ===
+//  Następny utwor na playliście 
 void MediaPlayer::nextTrack() {
     if (currentPlaylistIndex < playlistWidget->count() - 1)
         playItemAtIndex(currentPlaylistIndex + 1);
 }
 
-// === Przejdź do poprzedniego utworu na playliście ===
+//  Poprzedni utwor na playliście 
 void MediaPlayer::previousTrack() {
     if (currentPlaylistIndex > 0)
         playItemAtIndex(currentPlaylistIndex - 1);
 }
 
-// === Ustaw maksymalny czas suwaka postępu ===
+// Ustawienie maksymalnego czasu suwaka postępu
 void MediaPlayer::updateDuration(qint64 duration) {
     totalDuration = duration;
     progressSlider->setMaximum(duration / 1000); // w sekundach
 }
 
-// === Aktualizacja pozycji suwaka i wyświetlacza czasu ===
+// Aktualizacja pozycji suwaka i wyświetlacza czasu
 void MediaPlayer::updatePosition(qint64 position) {
-    int currentSecs = position / 1000;
+    int currentSecs = position / 1000; // dzielenie przez 1000, ponieważ czas jest w milisekundach
     int totalSecs = totalDuration / 1000;
 
     progressSlider->setValue(currentSecs);

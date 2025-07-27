@@ -1,5 +1,5 @@
 #include "gesture_server.h"     
-#include <QDebug>               // Do debugowania — wypisywanie informacji w konsoli
+#include <QDebug>               
 
 // Inicjalizuje serwer TCP i ustawia nasłuch na porcie 9999 (tylko lokalnie)
 GestureServer::GestureServer(QObject *parent) : QObject(parent) {
@@ -9,7 +9,7 @@ GestureServer::GestureServer(QObject *parent) : QObject(parent) {
 
     // Obsługa nowego połączenia TCP od klienta (jest to niezbędne dla gesture_client.py)
     connect(server, &QTcpServer::newConnection, this, [=]() {
-        // Gdy pojawia się nowe połączenie — pobieramy klienta (socket)
+        // Gdy pojawia się nowe połączenie — pobieramy klienta
         QTcpSocket *client = server->nextPendingConnection();
 
         // Reakcja na zdarzenie: klient przesyła dane (komendę gestu)
@@ -30,10 +30,8 @@ GestureServer::GestureServer(QObject *parent) : QObject(parent) {
 
     // Uruchomienie nasłuchu na porcie 9999 tylko na lokalnym hoście
     if (!server->listen(QHostAddress::LocalHost, 9999)) {
-        // Jeśli nie udało się rozpocząć nasłuchu — wypisz błąd
         qDebug() << "Gesture server failed to start:" << server->errorString();
     } else {
-        // Jeśli wszystko OK — informacja, że serwer działa
         qDebug() << "Gesture server is listening on port 9999...";
     }
 }

@@ -7,24 +7,25 @@
 #include <QPixmap>
 #include <QPalette>
 
+
 ImageViewer::ImageViewer(const QStringList &recentImages, QWidget *parent)
     : QWidget(parent),
       imageLabel(new QLabel),
       scrollArea(new QScrollArea),
-      openButton(new QPushButton(tr("Otwórz obraz"))),
-      clearButton(new QPushButton(tr("Wyczyść"))),
-      backButton(new QPushButton(tr("Powrót"))),
+      openButton(new QPushButton(tr("Open Image"))),
+      clearButton(new QPushButton(tr("Clear"))),
+      backButton(new QPushButton(tr("Back"))),
       rememberedImages(recentImages),
       currentImage(),
       lastLoadedPath(),
-      fitFactor(1.0),
-      userScale(1.0)
+      fitFactor(1.0),     // współczynnik dopasowania obrazu do okna
+      userScale(1.0)      // dodatkowy zoom od użytkownika
 {
-    // 1) QLabel (bez automatycznego rozciągania)
+    // QLabel — do wyświetlania obrazu (bez wymuszania rozmiaru)
     imageLabel->setBackgroundRole(QPalette::Base);
     imageLabel->setSizePolicy(QSizePolicy::Ignored, QSizePolicy::Ignored);
 
-    // 2) QScrollArea: wyśrodkuj, ukryj paski przewijania
+    // ScrollArea — zawiera QLabel, bez pasków przewijania
     scrollArea->setBackgroundRole(QPalette::Dark);
     scrollArea->setWidget(imageLabel);
     scrollArea->setWidgetResizable(false);
@@ -32,118 +33,110 @@ ImageViewer::ImageViewer(const QStringList &recentImages, QWidget *parent)
     scrollArea->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
     scrollArea->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
 
-    // 3) Podłącz przyciski
-    connect(openButton, &QPushButton::clicked,
-            this,       &ImageViewer::openImage);
-    connect(clearButton, &QPushButton::clicked,
-            this,        &ImageViewer::clearImage);
-    connect(backButton, &QPushButton::clicked,
-            this,      &ImageViewer::onBackButtonClicked);
+    // Połączenia przycisków z funkcjami
+    connect(openButton, &QPushButton::clicked, this, &ImageViewer::openImage);
+    connect(clearButton, &QPushButton::clicked, this, &ImageViewer::clearImage);
+    connect(backButton, &QPushButton::clicked, this, &ImageViewer::onBackButtonClicked);
 
-    // 4) Layout przycisków
+    // Układ przycisków w poziomie
     QHBoxLayout *buttonLayout = new QHBoxLayout;
     buttonLayout->addWidget(openButton);
     buttonLayout->addWidget(clearButton);
     buttonLayout->addStretch();
     buttonLayout->addWidget(backButton);
 
-    // 5) Główny layout: obraz + przyciski
+    // Główny layout — obraz + przyciski
     QVBoxLayout *mainLayout = new QVBoxLayout;
     mainLayout->addWidget(scrollArea);
     mainLayout->addLayout(buttonLayout);
     setLayout(mainLayout);
 
+    // Tytuł okna i domyślny rozmiar
     setWindowTitle(tr("Image Viewer"));
     resize(800, 600);
 }
 
+// Destruktor — nie trzeba ręcznie usuwać wskaźników (Qt robi to automatycznie)
 ImageViewer::~ImageViewer()
-{
-    // Qt sam usuwa wszystkie widgety-dzieci
-}
+{ }
 
+// Otwiera i ładuje plik obrazu
 void ImageViewer::openImage()
 {
     try
     {
+        // 1) Okno dialogowe do wyboru obrazu
         QString fileName = QFileDialog::getOpenFileName(
-        this,
-        tr("Wybierz plik obrazu"),
-        QString(),
-        tr("Obrazy (*.png *.jpg *.jpeg *.bmp *.gif);;Wszystkie pliki (*)")
-        );
+            this,
+            tr("Select image file"),
+            QString(),
+            tr("Images (*.png *.jpg *.jpeg *.bmp *.gif);;All files (*)"));
 
-        
         if (fileName.isEmpty())
             return;
 
+        // 2) Próba wczytania obrazu
         QImage img;
         if (!img.load(fileName)) {
             QMessageBox::warning(
                 this,
                 tr("Image Viewer"),
-                tr("Nie udało się wczytać obrazu:\n%1").arg(fileName)
+                tr("Failed to open image:\n%1").arg(fileName)
             );
-        } 
+        }
 
         currentImage = img;
         lastLoadedPath = fileName;
 
-        // 2) Oblicz fitFactor: max. 90% viewportu
+        // 3) Obliczenie fitFactor — maks. 90% rozmiaru viewportu
         QSize vpSz = scrollArea->viewport()->size();
         if (!currentImage.isNull() && vpSz.width() > 0 && vpSz.height() > 0) {
-            QSize maxSz(int(vpSz.width()  * 0.9),
-                        int(vpSz.height() * 0.9));
+            QSize maxSz(int(vpSz.width()  * 0.9), int(vpSz.height() * 0.9));
             QSize origSz = currentImage.size();
             double fx = double(maxSz.width())  / origSz.width();
             double fy = double(maxSz.height()) / origSz.height();
             fitFactor = qMin(fx, fy);
             if (fitFactor > 1.0) {
-                fitFactor = 1.0; // nie powiększaj, jeśli oryginał jest mniejszy
+                fitFactor = 1.0; // nie skaluj w górę jeśli nie trzeba
             }
         } else {
             fitFactor = 1.0;
         }
 
-        // 3) Reset dodatkowego zoomu użytkownika
+        // 4) Reset zoomu użytkownika
         userScale = 1.0;
 
-        // 4) Wyświetl obraz (fitFactor * userScale)
+        // 5) Odśwież widok obrazu
         updateImageDisplay();
 
-        // 5) Powiadom MainWindow o nowej ścieżce
+        // 6) Powiadom MainWindow o nowym pliku
         emit fileAdded(fileName);
     }
     catch (const std::exception &e) {
-    qDebug() << "Unexpected error:" << e.what();
+        qDebug() << "Unexpected error:" << e.what();
     }
-    
-    
-
-    
-
-    // 1) Zachowaj oryginał i ścieżkę
-    
-
-    
 }
 
+//  Czyści obraz i resetuje stan
 void ImageViewer::clearImage()
 {
     if (!currentImage.isNull() && !lastLoadedPath.isEmpty()) {
-        emit fileRemoved(lastLoadedPath);
+        emit fileRemoved(lastLoadedPath); // powiadom MainWindow
     }
-    imageLabel->clear();
-    currentImage = QImage();
-    lastLoadedPath.clear();
-    fitFactor = 1.0;
-    userScale = 1.0;
+
+    imageLabel->clear();           // usuń obraz z QLabel
+    currentImage = QImage();       // zresetuj obraz
+    lastLoadedPath.clear();        // usuń ścieżkę
+    fitFactor = 1.0;               // reset dopasowania
+    userScale = 1.0;               // reset zoomu
 }
 
+// Sygnał powrotu do głównego menu
 void ImageViewer::onBackButtonClicked()
 {
     emit returnToMainMenuClicked();
 }
+
 
 void ImageViewer::updateImageDisplay()
 {
@@ -152,7 +145,7 @@ void ImageViewer::updateImageDisplay()
         return;
     }
 
-    // Utwórz pixmapę i przeskaluj w oparciu o fitFactor * userScale
+    // Tworzenie pixmapy i przeskalowanie w oparciu o fitFactor * userScale
     QPixmap pixmap = QPixmap::fromImage(currentImage);
     double totalScale = fitFactor * userScale;
     if (totalScale <= 0.0) {
@@ -177,7 +170,7 @@ void ImageViewer::resizeEvent(QResizeEvent *event)
 {
     QWidget::resizeEvent(event);
 
-    // Gdy zmienia się wielkość okna, ponownie obliczamy fitFactor
+    // Gdy zmienia się wielkość okna, ponownie odbywa się obliczanie fitFactor
     // (by oryginał maks. 90% viewportu), zachowując userScale.
     if (!currentImage.isNull()) {
         QSize vpSz = scrollArea->viewport()->size();
@@ -252,7 +245,7 @@ void ImageViewer::wheelEvent(QWheelEvent *event)
         return;
     }
 
-    // 2) Bez Ctrl – ignorujemy przewijanie (pan tylko strzałkami)
+    // 2) Bez Ctrl – ignorowanie przewijania (pan tylko strzałkami)
     event->ignore();
 }
 
@@ -280,8 +273,6 @@ void ImageViewer::zoom(double factor, const QPointF &viewportAnchor)
     int vOld = vBar->value();
 
     // 3) Oblicz współrzędne punktu kotwiczenia w „przestrzeni oryginału”
-    //    fx = (hOld + viewportAnchor.x) / oldTotal
-    //    fy = (vOld + viewportAnchor.y) / oldTotal
     double fx = (hOld + viewportAnchor.x()) / oldTotal;
     double fy = (vOld + viewportAnchor.y()) / oldTotal;
 
@@ -291,8 +282,6 @@ void ImageViewer::zoom(double factor, const QPointF &viewportAnchor)
 
     // 5) Oblicz nowe pozycje suwaków, aby ten sam „oryginalny piksel”
     //    wylądował w tym samym miejscu viewportAnchor po nowym przeskalowaniu:
-    //    hNew = fx * newTotal - viewportAnchor.x
-    //    vNew = fy * newTotal - viewportAnchor.y
     int hNew = int(fx * newTotal - viewportAnchor.x());
     int vNew = int(fy * newTotal - viewportAnchor.y());
 
@@ -305,32 +294,43 @@ void ImageViewer::zoom(double factor, const QPointF &viewportAnchor)
     vBar->setValue(vNew);
 }
 
+// Powiększenie obrazu względem środka widocznego obszaru (viewportu)
 void ImageViewer::zoomInAtCenter()
 {
-    // punkt kotwiczenia = środek viewportu
+    // Obliczenie środku viewportu jako punkt odniesienia
     QSize vpSz = scrollArea->viewport()->size();
     QPointF centerPt(vpSz.width() / 2.0, vpSz.height() / 2.0);
+
+    // Powiększenie obrazu o 25% względem środka
     zoom(1.25, centerPt);
 }
 
+// Pomniejszenie obrazu względem środka widocznego obszaru
 void ImageViewer::zoomOutAtCenter()
 {
+    // Obliczenie środku viewportu
     QSize vpSz = scrollArea->viewport()->size();
     QPointF centerPt(vpSz.width() / 2.0, vpSz.height() / 2.0);
+
+    // Pomniejszenie obrazu o 20% względem środka
     zoom(1.0 / 1.25, centerPt);
 }
 
+// Przesuwanie (pan) obrazu o zadany wektor (dx, dy)
 void ImageViewer::panImage(int dx, int dy)
 {
-    QScrollBar *hBar = scrollArea->horizontalScrollBar();
-    QScrollBar *vBar = scrollArea->verticalScrollBar();
+    QScrollBar *hBar = scrollArea->horizontalScrollBar(); // pasek poziomy
+    QScrollBar *vBar = scrollArea->verticalScrollBar();   // pasek pionowy
 
+    // Obliczenie nowej pozycji pasków
     int newH = hBar->value() + dx;
     int newV = vBar->value() + dy;
 
+    // Ograniczenie nowej wartości do dostępnego zakresu suwaków
     newH = qBound(hBar->minimum(), newH, hBar->maximum());
     newV = qBound(vBar->minimum(), newV, vBar->maximum());
 
+    // Ustawienie nowych pozycji suwaków, co powoduje przesunięcie obrazu
     hBar->setValue(newH);
     vBar->setValue(newV);
 }

@@ -2,7 +2,8 @@ import cv2                      # OpenCV — biblioteka do przetwarzania obrazu 
 import mediapipe as mp          # MediaPipe — rozpoznawanie dłoni, twarzy
 import socket                   # socket — do komunikacji sieciowej (TCP z serwerem gestów)
 import time                     
-import math                     
+import math          
+
 
 # Konfiguracja połączenia TCP
 HOST = '127.0.0.1'              # Adres IP lokalnego hosta (serwera)
@@ -49,10 +50,10 @@ left_open_start_time = None      # Moment rozpoczęcia gestu „otwarta lewa dł
 
 
 while True:
-    # Odczyt jednej klatki z kamery (success = True jeśli się udało)
+    # Odczyt jednej klatki z kamery 
     success, frame = cap.read()
     if not success:
-        break  # Jeśli nie udało się odczytać — zakończ pętlę
+        break  
 
     # Poziome odbicie obrazu, tak aby dłoń wyglądała jak w odbiciu lustrzanym
     frame = cv2.flip(frame, 1)
@@ -120,7 +121,7 @@ while True:
                 pinky_tip = handLms.landmark[20]      # Koniec małego palca
 
                 # Czy kciuk znajduje się blisko małego palca (do gestów przesuwania)
-                thumb_near_pinky = distance(thumb_tip, pinky_tip) < 0.07
+                thumb_near_pinky = distance(thumb_tip, pinky_tip) < 0.14
 
                 # Stan każdego z palców prawej dłoni
                 thumb_up   = is_up(4, 3)
@@ -129,7 +130,7 @@ while True:
                 ring_up    = is_up(16, 14)
                 pinky_up   = is_up(20, 18)
 
-                # Liczba podniesionych palców ogółem
+                # Liczba podniesionych palców prawej dłoni
                 fingers_up = sum([thumb_up, index_up, middle_up, ring_up, pinky_up])
 
 
@@ -146,22 +147,19 @@ while True:
                     open_hand_active = False
 
                 # Przewijanie — dwa palce (wskazujący i środkowy) w górze, kciuk przy małym
-                if index_up and middle_up and not ring_up:
-                    if thumb_near_pinky:
-                        gesture_x = handLms.landmark[8].x  # Pozycja X palca wskazującego
-                        if prev_seek_x is not None:
-                            delta = gesture_x - prev_seek_x
-                            if abs(delta) > 0.03 and now - last_action_time > 0.5:
-                                if delta > 0:
-                                    print("forward")
-                                    send_command("fast_forward")
-                                else:
-                                    print("rewind")
-                                    send_command("rewind")
-                                last_action_time = now
-                        prev_seek_x = gesture_x
-                    else:
-                        prev_seek_x = None
+                if index_up and middle_up and thumb_near_pinky and not ring_up:
+                    gesture_x = handLms.landmark[8].x  # Pozycja X palca wskazującego
+                    if prev_seek_x is not None:
+                        delta = gesture_x - prev_seek_x
+                        if abs(delta) > 0.03 and now - last_action_time > 0.5:
+                            if delta > 0:
+                                print("forward")
+                                send_command("fast_forward")
+                            else:
+                                print("rewind")
+                                send_command("rewind")
+                            last_action_time = now
+                    prev_seek_x = gesture_x
                 else:
                     prev_seek_x = None
 
@@ -247,7 +245,7 @@ while True:
                         last_action_time = now
 
                 # Sterowanie obrazem (pan/zoom) — Image Viewer
-                if pinky_up and fingers_up <= 2:
+                if pinky_up and fingers_up <= 1:
                     mid_x = handLms.landmark[12].x
                     mid_y = handLms.landmark[12].y
 
@@ -267,12 +265,12 @@ while True:
                         last_action_time = now
 
                 # === GEST ZOOM: odległość kciuka i palca wskazującego ===
-                elif fingers_up <= 2:
+                elif index_up and not middle_up:
                     thumb_tip = handLms.landmark[4]
                     index_tip = handLms.landmark[8]
                     dist = distance(thumb_tip, index_tip)
 
-                    if dist > 0.15 and now - last_action_time > 0.75:
+                    if dist > 0.20 and now - last_action_time > 0.75:
                         print("Zoom In")
                         send_command("zoom_in")
                         last_action_time = now
@@ -312,7 +310,7 @@ while True:
         break
 
 # Zwolnienie zasobów kamery po zakończeniu działania programu
-cap.release()  # Zamyka połączenie z kamerą
+cap.release() 
 
 # Zamknięcie wszystkich otwartych okien OpenCV
-cv2.destroyAllWindows()  # Usuwa okno „Gesture Control” i inne potencjalne okna
+cv2.destroyAllWindows()

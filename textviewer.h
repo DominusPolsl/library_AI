@@ -17,8 +17,7 @@ class TextViewer : public QWidget {
 public:
     // Konstruktor — tworzy widżet PDF (opcjonalnie z rodzicem)
     explicit TextViewer(QWidget *parent = nullptr);
-
-public slots:
+    
     // Slot otwierający plik PDF z systemowego okna dialogowego
     void openPdf();
 

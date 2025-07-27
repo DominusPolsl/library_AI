@@ -9,7 +9,7 @@
 #include "mediaplayer.h"
 #include "imageviewer.h"
 
-class GestureServer; // 🔹 forward declaration (не забути)
+class GestureServer; 
 
 class MainWindow : public QMainWindow {
     Q_OBJECT
@@ -18,15 +18,18 @@ public:
     MainWindow(QWidget *parent = nullptr);
     ~MainWindow();
 
+protected:
+    void closeEvent(QCloseEvent *event) override;
+
 private slots:
     void openMediaPlayer();
     void openTextReader();
     void openImageViewer();
     void openCamera();
-    void goBackToMenu(); // Повернення назад
+    void goBackToMenu(); 
 
 private:
-    QStackedWidget *stack;
+    QStackedWidget *stack; // stos stron
 
     QWidget *menuPage;
     MediaPlayer *mediaPlayerPage;
@@ -41,5 +44,7 @@ private:
     QProcess *cameraProcess = nullptr;
     bool cameraRunning = false;
 
-    GestureServer *gestureServer; // 🔹 нове поле для сервера
-};
+    GestureServer *gestureServer; // pole do serwera gestów
+    void terminateCameraProcess();
+    void forceKillGestureClient();
+};    

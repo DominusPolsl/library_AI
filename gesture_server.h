@@ -1,12 +1,10 @@
 #pragma once 
 
-#include <QObject>      // Podstawowa klasa bazowa dla wszystkich obiektów Qt (sygnały, sloty)
+#include <QObject>      
 #include <QTcpServer>   // Klasa służąca do tworzenia serwera TCP
 #include <QTcpSocket>   // Klasa reprezentująca połączenie klienta TCP
 #include <QString>      // Klasa Qt dla łańcuchów tekstowych (stringów)
 
-// Klasa ta odpowiada za nasłuchiwanie połączeń TCP od klienta (np. gesture_client.py)
-// i wysyłanie odebranych gestów jako sygnały do innych komponentów Qt
 class GestureServer : public QObject {
     Q_OBJECT  // Makro Qt umożliwiające użycie sygnałów i slotów
 
