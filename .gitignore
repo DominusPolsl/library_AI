@@ -3,3 +3,5 @@ build/
 build*/
 CMakelists.txt
 installer/
+dist/
+icons/
